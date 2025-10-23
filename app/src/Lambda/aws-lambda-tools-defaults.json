@@ -1,0 +1,9 @@
+{
+  "function-handler": "Lambda::Lambda.Function::Handler",
+  "framework": "net8.0",
+  "function-name": "TransactionLambda",
+  "function-description": "Lambda para crear transacciones",
+  "timeout": 30,
+  "memory-size": 256
+}
+
