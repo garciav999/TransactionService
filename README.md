@@ -33,6 +33,8 @@ app/
 │   └── Worker/              # Background service for Kafka consumers
 ├── tests/
 │   └── Application.Tests/   # xUnit tests for Application layer
+├── database/
+│   └── init-db.sql          # Database initialization script
 ├── docker-compose.yml       # Infrastructure services
 ├── openapi.yml             # API specification
 └── sequence-diagram.md      # Architecture diagrams
@@ -65,6 +67,57 @@ Expected containers:
 - PostgreSQL (port 5432)
 - Kafka (port 9092)
 - Zookeeper (port 2181)
+
+### Database Setup
+
+3. Create the database and tables:
+
+**Option A: Using the SQL script file (Recommended)**
+```powershell
+# Copy the SQL script into the PostgreSQL container
+docker cp app/database/init-db.sql <postgres-container-id>:/tmp/init-db.sql
+
+# Execute the script
+docker exec -it <postgres-container-id> psql -U postgres -f /tmp/init-db.sql
+```
+
+**Option B: Using psql interactive mode**
+```powershell
+# Connect to PostgreSQL
+docker exec -it <postgres-container-id> psql -U postgres
+
+# Then paste the SQL script content
+```
+
+**Option C: Quick setup (one-liner)**
+```powershell
+Get-Content app/database/init-db.sql | docker exec -i <postgres-container-id> psql -U postgres
+```
+
+**Database Schema:**
+
+The script creates the following tables:
+
+1. **Transaction**: Main table for storing financial transactions
+   - `TransactionExternalId` (UUID, PK): Unique transaction identifier
+   - `SourceAccountId` (UUID): Source account
+   - `TargetAccountId` (UUID): Target account
+   - `TransferTypeId` (INT): Transfer type (1=Transfer, 2=Payment)
+   - `Value` (NUMERIC): Transaction amount (must be > 0)
+   - `Status` (INT): Transaction status (1=Pending, 2=Approved, 3=Rejected)
+   - `CreatedAt` (TIMESTAMP): Creation timestamp
+
+2. **Parameter**: Generic catalog table for system parameters
+   - `ParameterId` (UUID, PK): Parameter identifier
+   - `Code` (VARCHAR): Parameter code
+   - `Description` (VARCHAR): Parameter description
+   - `NameTable` (VARCHAR): Catalog name
+
+**Verify Installation:**
+```powershell
+docker exec -it <postgres-container-id> psql -U postgres -d transactionsdb -c "SELECT COUNT(*) FROM \"Transaction\";"
+docker exec -it <postgres-container-id> psql -U postgres -d transactionsdb -c "SELECT * FROM \"Parameter\";"
+```
 
 ### Running the Application
 
