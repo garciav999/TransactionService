@@ -286,15 +286,41 @@ The application uses automatic migrations. Ensure PostgreSQL is accessible and c
 The project includes comprehensive unit tests for the Application layer using xUnit, Moq, and FluentAssertions.
 
 **Quick Test Run:**
-```powershell
+```bash
 cd app/tests/Application.Tests
 dotnet test
 ```
 
-**With Coverage Report (Recommended):**
+**With Coverage Report:**
+
+For PowerShell:
 ```powershell
 cd app/tests/Application.Tests
-.\run-tests-with-coverage.ps1
+./run-tests-with-coverage.ps1
+```
+
+For Bash/Git Bash:
+```bash
+cd app/tests/Application.Tests
+./coverage.sh
+```
+
+For simple coverage percentage:
+```bash
+# PowerShell
+./coverage.ps1
+
+# Bash
+./coverage.sh
+```
+
+Output:
+```
+Ejecutando tests...
+
+Cobertura de Codigo:
+  Lineas:  48.38%
+  Ramas:   100%
 ```
 
 ### Test Coverage
@@ -308,6 +334,11 @@ cd app/tests/Application.Tests
 - ✅ `TransactionService` - 100%
 - ✅ `Transaction` (Entity) - 100%
 - ✅ `TransactionCreatedEvent` - 93.33%
+
+**Available Scripts:**
+- `coverage.sh`: Simple coverage report for Bash/Git Bash
+- `coverage.ps1`: Simple coverage report for PowerShell
+- `run-tests-with-coverage.ps1`: Detailed coverage report with per-class breakdown
 
 See [Application.Tests/README.md](app/tests/Application.Tests/README.md) for detailed test documentation.
 
