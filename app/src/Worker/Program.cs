@@ -17,22 +17,14 @@ public class Program
         var builder = Host.CreateDefaultBuilder(args)
             .ConfigureServices((context, services) =>
             {
-                var configuration = context.Configuration;
+                var conn = context.Configuration.GetConnectionString("DefaultConnection");
                 
-                // Database
-                var conn = configuration.GetConnectionString("DefaultConnection");
-                services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseNpgsql(conn));
-
-                // Services
+                services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(conn));
                 services.AddScoped<ITransactionRepository, TransactionRepository>();
                 services.AddScoped<ITransactionService, Application.Services.TransactionService>();
-                
-                // Background Service
                 services.AddHostedService<TransactionStatusConsumerService>();
             });
 
-        var host = builder.Build();
-        await host.RunAsync();
+        await builder.Build().RunAsync();
     }
 }

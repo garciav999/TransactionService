@@ -40,7 +40,7 @@ public class TransactionStatusConsumerService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _consumer.Subscribe("transaction-status-events");
-        _logger.LogInformation("🎧 Listening to transaction-status-events");
+        _logger.LogInformation("Listening to transaction-status-events");
 
         try
         {
@@ -58,7 +58,7 @@ public class TransactionStatusConsumerService : BackgroundService
                 }
                 catch (ConsumeException ex) when (ex.Error.Code == ErrorCode.UnknownTopicOrPart)
                 {
-                    _logger.LogWarning("⏳ Waiting for topic transaction-status-events...");
+                    _logger.LogWarning("Waiting for topic transaction-status-events...");
                     await Task.Delay(5000, stoppingToken);
                 }
                 catch (ConsumeException ex)
@@ -84,55 +84,35 @@ public class TransactionStatusConsumerService : BackgroundService
     {
         try
         {
-            Console.WriteLine("\n" + new string('=', 70));
-            Console.WriteLine("📨 MESSAGE RECEIVED FROM KAFKA");
-            Console.WriteLine(new string('=', 70));
-            Console.WriteLine($"🔑 Message Key: {message.Key}");
-            Console.WriteLine($"📄 Message Value (Raw JSON):");
+            Console.WriteLine("MESSAGE RECEIVED FROM KAFKA");
             Console.WriteLine(message.Value);
-            Console.WriteLine(new string('=', 70));
-
-            _logger.LogInformation("Processing transaction status update: {MessageKey}", message.Key);
-            _logger.LogInformation("Raw message value: {MessageValue}", message.Value);
 
             var statusEvent = JsonSerializer.Deserialize<TransactionStatusEvent>(message.Value, new JsonSerializerOptions
             {
-                PropertyNameCaseInsensitive = true // ← Ignora mayúsculas/minúsculas
+                PropertyNameCaseInsensitive = true
             });
 
             if (statusEvent == null)
             {
                 _logger.LogWarning("Failed to deserialize transaction status event");
-                Console.WriteLine("❌ ERROR: Failed to deserialize JSON");
                 return;
             }
 
-            Console.WriteLine($"✅ Deserialized Successfully:");
-            Console.WriteLine($"   TransactionId: {statusEvent.TransactionId}");
-            Console.WriteLine($"   Status: {statusEvent.Status}");
-            Console.WriteLine($"   Reason: {statusEvent.Reason}");
-            Console.WriteLine(new string('=', 70) + "\n");
-
-            _logger.LogInformation("Deserialized event - TransactionId: {TransactionId}, Status: {Status}", 
-                statusEvent.TransactionId, statusEvent.Status);
-
-            // Usar scope para resolver dependencias
             using var scope = _serviceProvider.CreateScope();
             var transactionService = scope.ServiceProvider.GetRequiredService<ITransactionService>();
 
-            // Actualizar estado de la transacción en la base de datos
             await transactionService.UpdateTransactionStatusAsync(
                 statusEvent.TransactionId,
                 statusEvent.Status,
                 statusEvent.Reason
             );
 
-            _logger.LogInformation("Updated transaction {TransactionId} status to {Status}", 
+            _logger.LogInformation("Transaction {TransactionId} updated to {Status}", 
                 statusEvent.TransactionId, statusEvent.Status);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing transaction status event for message key: {MessageKey}", message.Key);
+            _logger.LogError(ex, "Error processing transaction {MessageKey}", message.Key);
             throw;
         }
     }

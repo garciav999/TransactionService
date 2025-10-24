@@ -25,13 +25,11 @@ public class TransactionService : ITransactionService
             throw new InvalidOperationException($"Transaction with external ID {transactionExternalId} not found");
         }
 
-        // Convertir string a enum
         if (!Enum.TryParse<TransactionStatus>(status, true, out var transactionStatus))
         {
             throw new ArgumentException($"Invalid transaction status: {status}");
         }
 
-        // Actualizar el status
         await _transactionRepository.UpdateStatusAsync(transactionExternalId, transactionStatus, reason);
     }
 }

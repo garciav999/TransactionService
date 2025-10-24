@@ -13,8 +13,7 @@ namespace Lambda
             listener.Prefixes.Add($"http://localhost:{port}/");
             listener.Start();
 
-            Console.WriteLine($"✅ Server listening on: http://localhost:{port}/");
-            Console.WriteLine("⏳ Waiting for requests... (Press Ctrl+C to stop)\n");
+            Console.WriteLine($"Transaction Service running on http://localhost:{port}/");
 
             var function = new Function();
 
@@ -39,47 +38,33 @@ namespace Lambda
 
             try
             {
-                Console.WriteLine($"\n🔔 New Request - {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-                Console.WriteLine($"   Method: {request.HttpMethod}");
-                Console.WriteLine($"   URL: {request.Url?.PathAndQuery}");
-
                 if (request.HttpMethod != "POST")
                 {
                     await SendResponse(response, 405, new { error = "Only POST method allowed" });
-                    Console.WriteLine("   ❌ 405 - Method Not Allowed");
                     return;
                 }
 
-                string body = "";
+                string body;
                 using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
                 {
                     body = await reader.ReadToEndAsync();
                 }
-
-                Console.WriteLine($"   Body: {body}");
 
                 var lambdaRequest = JsonConvert.DeserializeObject<Function.CreateTransactionRequest>(body);
                 
                 if (lambdaRequest == null)
                 {
                     await SendResponse(response, 400, new { error = "Invalid JSON" });
-                    Console.WriteLine("   ❌ 400 - Invalid JSON");
                     return;
                 }
 
-                // Invocar Lambda handler
                 var result = await function.Handler(lambdaRequest, null!);
-
                 await SendResponse(response, 200, result);
-                Console.WriteLine("   ✅ 200 - Success");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"   ❌ Error: {ex.Message}");
-                await SendResponse(response, 500, new { 
-                    error = ex.Message, 
-                    type = ex.GetType().Name 
-                });
+                Console.WriteLine($"❌ Error: {ex.Message}");
+                await SendResponse(response, 500, new { error = ex.Message });
             }
         }
 
@@ -89,7 +74,7 @@ namespace Lambda
             {
                 response.StatusCode = statusCode;
                 response.ContentType = "application/json";
-                var json = JsonConvert.SerializeObject(data, Formatting.Indented);
+                var json = JsonConvert.SerializeObject(data);
                 var bytes = Encoding.UTF8.GetBytes(json);
                 await response.OutputStream.WriteAsync(bytes, 0, bytes.Length);
             }

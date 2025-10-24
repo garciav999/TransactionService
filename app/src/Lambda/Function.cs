@@ -20,14 +20,10 @@ namespace Lambda
 
         public async Task<object> Handler(CreateTransactionRequest request, ILambdaContext context)
         {
-
             try
             {
                 if (request is null)
-                {
-                    Console.WriteLine("❌ Request is null");
                     return new { success = false, error = "Request is null" };
-                }
 
                 if (request.SourceAccountId == Guid.Empty)
                     return new { success = false, error = "SourceAccountId is required" };
@@ -48,23 +44,16 @@ namespace Lambda
                     request.Value
                 );
 
-                var response = new
+                return new
                 {
                     success = true,
                     data = externalId,
                     message = "Transaction created successfully",
-                    eventInfo = "Event 'transaction.created' published to topic 'transaction-events' - Ready for anti-fraud processing",
                     timestamp = DateTime.UtcNow
                 };
-
-
-                return response;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ ERROR OCCURRED:");
-                Console.WriteLine($"   Exception: {ex.GetType().Name}");
-
                 return new
                 {
                     success = false,
@@ -73,6 +62,5 @@ namespace Lambda
                 };
             }
         }
-
     }
 }

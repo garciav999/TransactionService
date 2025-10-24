@@ -38,7 +38,6 @@ public class TransactionCreatedEvent : DomainEvent
     }
 }
 
-// Evento que recibes del anti-fraud service
 public class TransactionStatusEvent
 {
     public Guid TransactionId { get; set; }

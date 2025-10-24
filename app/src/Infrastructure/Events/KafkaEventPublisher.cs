@@ -17,7 +17,6 @@ public class KafkaEventPublisher : IEventPublisher, IDisposable
     {
         _logger = logger;
 
-        // Configuración de Kafka
         var config = new ProducerConfig
         {
             BootstrapServers = configuration.GetConnectionString("Kafka") ?? "localhost:9092",
@@ -34,7 +33,6 @@ public class KafkaEventPublisher : IEventPublisher, IDisposable
             .SetErrorHandler((_, e) => _logger.LogError("Kafka error: {Error}", e.Reason))
             .Build();
 
-        // Mapeo de eventos a topics
         _topicMappings = new Dictionary<string, string>
         {
             { "transaction.created", "transaction-events" }
@@ -88,7 +86,6 @@ public class KafkaEventPublisher : IEventPublisher, IDisposable
 
     private string GetEventKey<T>(T domainEvent) where T : DomainEvent
     {
-        // Para TransactionCreatedEvent, usamos el TransactionExternalId como key
         if (domainEvent is TransactionCreatedEvent transactionEvent)
         {
             return transactionEvent.TransactionExternalId.ToString();

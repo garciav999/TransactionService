@@ -25,10 +25,8 @@ public class TransactionCommands
         var externalId = Guid.NewGuid();
         var transaction = new Transaction(externalId, sourceAccountId, targetAccountId, transferTypeId, value, status);
 
-        // 1. Guardar la transacción en la base de datos
         await _transactionRepository.AddAsync(transaction);
 
-        // 2. Enviar evento para anti-fraud
         var transactionCreatedEvent = new TransactionCreatedEvent(
             externalId,
             sourceAccountId,
