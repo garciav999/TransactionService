@@ -26,16 +26,24 @@ public class TransactionRepository : ITransactionRepository
             .FirstOrDefaultAsync(t => t.TransactionExternalId == transactionExternalId);
     }
 
-    public async Task UpdateStatusAsync(Guid transactionExternalId, TransactionStatus status)
+    public async Task UpdateStatusAsync(Guid transactionExternalId, TransactionStatus status, string? reason = null)
     {
         var transaction = await GetByExternalIdAsync(transactionExternalId);
         if (transaction != null)
         {
+            // Usar reflection para actualizar propiedades privadas
             typeof(Transaction)
                 .GetProperty(nameof(Transaction.Status))!
                 .SetValue(transaction, status);
 
+            // Si necesitas guardar la razón, podrías agregar un campo en la entidad
+            // o crear una tabla de auditoría
+
             await _context.SaveChangesAsync();
+        }
+        else
+        {
+            throw new InvalidOperationException($"Transaction with external ID {transactionExternalId} not found");
         }
     }
 

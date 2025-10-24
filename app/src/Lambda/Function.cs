@@ -17,25 +17,62 @@ namespace Lambda
         }
 
         public record CreateTransactionRequest(Guid SourceAccountId, Guid TargetAccountId, int TransferTypeId, decimal Value);
-        public record CreateTransactionResponse(Guid TransactionExternalId);
 
-        public async Task<CreateTransactionResponse> Handler(CreateTransactionRequest request)
+        public async Task<object> Handler(CreateTransactionRequest request, ILambdaContext context)
         {
-            if (request is null) throw new ArgumentNullException(nameof(request));
-            if (request.Value <= 0) throw new ArgumentException("Value must be greater than zero.", nameof(request.Value));
 
-            using var scope = _serviceProvider.CreateScope();
+            try
+            {
+                if (request is null)
+                {
+                    Console.WriteLine("❌ Request is null");
+                    return new { success = false, error = "Request is null" };
+                }
 
-            var commands = scope.ServiceProvider.GetRequiredService<TransactionCommands>();
+                if (request.SourceAccountId == Guid.Empty)
+                    return new { success = false, error = "SourceAccountId is required" };
 
-            var externalId = await commands.InsertAsync(
-                request.SourceAccountId,
-                request.TargetAccountId,
-                request.TransferTypeId,
-                request.Value
-            );
+                if (request.TargetAccountId == Guid.Empty)
+                    return new { success = false, error = "TargetAccountId is required" };
 
-            return new CreateTransactionResponse(externalId);
+                if (request.Value <= 0)
+                    return new { success = false, error = "Value must be greater than zero" };
+
+                using var scope = _serviceProvider.CreateScope();
+                var commands = scope.ServiceProvider.GetRequiredService<TransactionCommands>();
+
+                var externalId = await commands.InsertAsync(
+                    request.SourceAccountId,
+                    request.TargetAccountId,
+                    request.TransferTypeId,
+                    request.Value
+                );
+
+                var response = new
+                {
+                    success = true,
+                    data = externalId,
+                    message = "Transaction created successfully",
+                    eventInfo = "Event 'transaction.created' published to topic 'transaction-events' - Ready for anti-fraud processing",
+                    timestamp = DateTime.UtcNow
+                };
+
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ ERROR OCCURRED:");
+                Console.WriteLine($"   Exception: {ex.GetType().Name}");
+
+                return new
+                {
+                    success = false,
+                    error = ex.Message,
+                    timestamp = DateTime.UtcNow
+                };
+            }
         }
+
     }
 }
